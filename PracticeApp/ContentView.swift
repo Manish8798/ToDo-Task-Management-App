@@ -24,12 +24,14 @@ struct ContentView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.gray, lineWidth: 1)
                         )
-                        .frame(height: 50)
+                        .background(Color.gray.opacity(0.1)) // Background color
+                        .frame(height: 100)
                     
                     if text.isEmpty {
                         Text("Write something...")
-                            .padding()
                             .foregroundColor(Color.gray)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 10)
                     }
                 }
                 
@@ -44,21 +46,21 @@ struct ContentView: View {
                 })
             }
             
-            List(todos) { task in
-                HStack{
-                    Text(task.title)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        modelContext.delete(task)
-                    }, label: {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(Color.red)
-                    })
-                    
+            List {
+                ForEach(Array(todos.enumerated()), id: \.offset) { index, task in
+                    HStack {
+                        Text("\(index + 1). \(task.title)")
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            modelContext.delete(task)
+                        }, label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(Color.red)
+                        })
+                    }
                 }
-                
             }.listStyle(PlainListStyle())
         }
         .padding()
