@@ -12,12 +12,12 @@ import SwiftData
 class TaskModel {
     var title: String
     var isCompleted: Bool
-    var pripority: Int
+    var priority: Int
     
-    init(title: String, isCompleted: Bool, pripority: Int) {
+    init(title: String, isCompleted: Bool, priority: Int) {
         self.title = title
         self.isCompleted = isCompleted
-        self.pripority = pripority
+        self.priority = priority
     }
     
 }

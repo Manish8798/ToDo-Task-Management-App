@@ -37,7 +37,7 @@ struct ContentView: View {
                 
                 Button(action: {
                     if !text.isEmpty {
-                        let task = TaskModel(title: text, isCompleted: false, pripority: 0)
+                        let task = TaskModel(title: text, isCompleted: false, priority: 0)
                         modelContext.insert(task)
                         text = ""
                     }
