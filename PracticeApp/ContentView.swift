@@ -11,62 +11,78 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var text: String = ""
+    @State private var editingTask: TaskModel? = nil
+    @State private var addTaskSheet: Bool = false
     @Query private var todos: [TaskModel] = []
     
     var body: some View {
-        VStack {
-            HStack {
-                ZStack(alignment: .topLeading) {
-                    TextEditor(text: $text)
-                        .textEditorStyle(PlainTextEditorStyle())
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray, lineWidth: 1)
-                        )
-                        .background(Color.gray.opacity(0.1)) // Background color
-                        .frame(height: 100)
-                    
-                    if text.isEmpty {
-                        Text("Write something...")
-                            .foregroundColor(Color.gray)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 10)
-                    }
-                }
+        NavigationStack { // Wrap in NavigationStack to use toolbar
+            VStack {
                 
-                Button(action: {
-                    if !text.isEmpty {
-                        let task = TaskModel(title: text, isCompleted: false, priority: 0)
-                        modelContext.insert(task)
-                        text = ""
-                    }
-                }, label: {
-                    Text("Save")
-                })
-            }
-            
-            List {
-                ForEach(Array(todos.enumerated()), id: \.offset) { index, task in
-                    HStack {
-                        Text("\(index + 1). \(task.title)")
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            modelContext.delete(task)
-                        }, label: {
-                            Image(systemName: "trash.fill")
-                                .foregroundColor(Color.red)
-                        })
+                ScrollView {
+                    ForEach(Array(todos.enumerated()), id: \.offset) { index, task in
+                        HStack {
+                            Text("\(index + 1). ")
+                            // Checkbox Toggle
+                             Toggle("", isOn: Binding(
+                                 get: { task.isCompleted },
+                                 set: { newValue in
+                                     // Update the task's completion status
+                                     task.isCompleted = newValue
+                                 }
+                             ))
+                             .labelsHidden()
+                             .toggleStyle(CheckboxStyle())
+                             
+                             // Task title with strikethrough when completed
+                             Text("\(task.title)")
+                                 .lineLimit(2)  // Limits the text to 2 lines
+                                 .truncationMode(.tail)
+                                 .strikethrough(task.isCompleted, color: .gray)
+                                 .foregroundColor(task.isCompleted ? .gray : .primary)
+                                 .onTapGesture{
+                                     editingTask = task
+                                     text = task.title
+                                     addTaskSheet = true
+                                 }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                modelContext.delete(task)
+                            }, label: {
+                                Image(systemName: "trash.fill")
+                                    .foregroundColor(Color.red)
+                            })
+                        }.padding()
                     }
                 }
-            }.listStyle(PlainListStyle())
+            }
+            .padding()
+            .navigationTitle("Tasks") // Add a navigation title
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        editingTask = nil
+                        text = ""
+                        addTaskSheet = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                    }
+                }
+            }
+            .sheet(isPresented: $addTaskSheet) {
+                // You can create a separate view for adding tasks
+                AddTask(addTaskSheet: $addTaskSheet, text: $text, editingTask: $editingTask)
+                .presentationDetents([.medium]) // Makes the sheet not full screen
+            }
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .modelContainer(for: TaskModel.self, inMemory: true)
 }

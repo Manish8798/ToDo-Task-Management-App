@@ -13,7 +13,7 @@ struct PracticeAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .modelContainer(for: TaskModel.self)
+                .modelContainer(for: TaskModel.self, inMemory: false)
         }
     }
 }

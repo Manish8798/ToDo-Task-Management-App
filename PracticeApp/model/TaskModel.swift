@@ -12,7 +12,7 @@ import SwiftData
 class TaskModel {
     var title: String
     var isCompleted: Bool
-    var priority: Int
+    var priority: Int = 0
     
     init(title: String, isCompleted: Bool, priority: Int) {
         self.title = title
