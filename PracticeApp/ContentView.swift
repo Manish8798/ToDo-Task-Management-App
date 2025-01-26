@@ -7,9 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import ConfettiSwiftUI
+
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var confettiCounter = 0
     @State private var text: String = ""
     @State private var description: String = ""
     @State private var taskPriority: Int = 0
@@ -18,7 +21,7 @@ struct ContentView: View {
     @State private var showingDeleteConfirmation: Bool = false
     @State private var taskToDelete: TaskModel? = nil
     @Query(sort: \TaskModel.priority, order: .reverse) private var todos: [TaskModel]
-
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
@@ -59,6 +62,9 @@ struct ContentView: View {
                                         get: { task.isCompleted },
                                         set: { newValue in
                                             task.isCompleted = newValue
+                                            if newValue { // Trigger confetti only when marking as completed
+                                                confettiCounter += 1
+                                            }
                                         }
                                     ))
                                     .labelsHidden()
@@ -90,8 +96,10 @@ struct ContentView: View {
                                 .padding()
                             }
                         }
+
                     }
                 }
+                .confettiCannon(trigger: $confettiCounter, num: 50, radius: 400.0, hapticFeedback: true)
                 .padding()
                 .navigationTitle("Tasks (\(todos.count))")
                 
@@ -102,7 +110,7 @@ struct ContentView: View {
                     description = ""
                     addTaskSheet = true
                 }).padding()
-                  .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }
             .sheet(isPresented: $addTaskSheet) {
                 AddTask(addTaskSheet: $addTaskSheet, text: $text, description: $description, taskPriority: $taskPriority, editingTask: $editingTask)
