@@ -11,93 +11,102 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var text: String = ""
+    @State private var description: String = ""
+    @State private var taskPriority: Int = 0
     @State private var editingTask: TaskModel? = nil
     @State private var addTaskSheet: Bool = false
     @State private var showingDeleteConfirmation: Bool = false
     @State private var taskToDelete: TaskModel? = nil
-    @Query private var todos: [TaskModel] = []
-    
+    @Query(sort: \TaskModel.priority, order: .reverse) private var todos: [TaskModel]
+
     var body: some View {
-        NavigationStack { // Wrap in NavigationStack to use toolbar
-            VStack {
-                if todos.isEmpty {
-                    Button(action: {
-                        editingTask = nil
-                        text = ""
-                        addTaskSheet = true
-                    }, label: {
-                        VStack{
-                            Image(systemName: "plus.app")
+        NavigationStack {
+            ZStack(alignment: .bottomTrailing) {
+                // Existing content with conditional rendering
+                VStack {
+                    if todos.isEmpty {
+                        // Empty state view
+                        
+                        VStack(spacing: 10) {
+                            Spacer()
+                            
+                            Image(systemName: "list.bullet")
                                 .resizable()
-                                .frame(width: 50, height: 50)
-                            Text("Add Task")
-                                .font(.caption)
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(.gray.opacity(0.5))
+                            
+                            Text("No tasks yet")
+                                .font(.title2)
                                 .foregroundColor(.gray)
-                                .padding(.vertical, 5)
-                        }
-                    })
-                    
-                } else {
-                    ScrollView {
-                        ForEach(Array(todos.enumerated()), id: \.offset) { index, task in
-                            HStack {
-                                Text("\(index + 1). ")
-                                // Checkbox Toggle
-                                Toggle("", isOn: Binding(
-                                    get: { task.isCompleted },
-                                    set: { newValue in
-                                        // Update the task's completion status
-                                        task.isCompleted = newValue
+                            
+                            Text("Tap the + button to add your first task")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                                .padding()
+                            
+                            Spacer()
+                        }.frame(maxWidth: .infinity, maxHeight: .infinity) // Ensures full-screen centering
+                        
+                    } else {
+                        ScrollView {
+                            ForEach(Array(todos.enumerated()), id: \.offset) { index, task in
+                                HStack {
+                                    Text("\(index + 1). ")
+                                    
+                                    Toggle("", isOn: Binding(
+                                        get: { task.isCompleted },
+                                        set: { newValue in
+                                            task.isCompleted = newValue
+                                        }
+                                    ))
+                                    .labelsHidden()
+                                    .toggleStyle(CheckboxStyle())
+                                    
+                                    Text("\(task.title)")
+                                        .lineLimit(2)
+                                        .truncationMode(.tail)
+                                        .strikethrough(task.isCompleted, color: .gray)
+                                        .foregroundColor(task.isCompleted ? .gray : .primary)
+                                        .onTapGesture {
+                                            editingTask = task
+                                            text = task.title
+                                            description = task.desc ?? ""
+                                            taskPriority = task.priority
+                                            addTaskSheet = true
+                                        }
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        taskToDelete = task
+                                        showingDeleteConfirmation = true
+                                    }) {
+                                        Image(systemName: "trash.fill")
+                                            .foregroundColor(Color.red)
                                     }
-                                ))
-                                .labelsHidden()
-                                .toggleStyle(CheckboxStyle())
-                                
-                                // Task title with strikethrough when completed
-                                Text("\(task.title)")
-                                    .lineLimit(2)  // Limits the text to 2 lines
-                                    .truncationMode(.tail)
-                                    .strikethrough(task.isCompleted, color: .gray)
-                                    .foregroundColor(task.isCompleted ? .gray : .primary)
-                                    .onTapGesture{
-                                        editingTask = task
-                                        text = task.title
-                                        addTaskSheet = true
-                                    }
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    taskToDelete = task
-                                    showingDeleteConfirmation = true
-                                }, label: {
-                                    Image(systemName: "trash.fill")
-                                        .foregroundColor(Color.red)
-                                })
-                            }.padding()
+                                }
+                                .padding()
+                            }
                         }
                     }
                 }
-            }
-            .padding()
-            .navigationTitle("Tasks") // Add a navigation title
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        editingTask = nil
-                        text = ""
-                        addTaskSheet = true
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                    }
-                }
+                .padding()
+                .navigationTitle("Tasks (\(todos.count))")
+                
+                // Floating Action Button
+                FloatingActionButton(action: {
+                    editingTask = nil
+                    text = ""
+                    description = ""
+                    addTaskSheet = true
+                }).padding()
+                  .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }
             .sheet(isPresented: $addTaskSheet) {
-                // You can create a separate view for adding tasks
-                AddTask(addTaskSheet: $addTaskSheet, text: $text, editingTask: $editingTask)
-                .presentationDetents([.medium]) // Makes the sheet not full screen
+                AddTask(addTaskSheet: $addTaskSheet, text: $text, description: $description, taskPriority: $taskPriority, editingTask: $editingTask)
+                    .presentationDetents([.large])
             }
             .alert("Delete Task", isPresented: $showingDeleteConfirmation, presenting: taskToDelete) { task in
                 Button("Delete", role: .destructive) {
@@ -108,6 +117,24 @@ struct ContentView: View {
                 Text("Are you sure you want to delete this task?")
             }
         }
+    }
+}
+
+// Reusable Floating Action Button
+struct FloatingActionButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "plus.circle.fill")
+                .resizable()
+                .frame(width: 60, height: 60)
+                .foregroundColor(.blue)
+                .background(Color.white)
+                .clipShape(Circle())
+                .shadow(color: .gray.opacity(0.4), radius: 5, x: 0, y: 3)
+        }
+        .padding(16)
     }
 }
 

@@ -13,11 +13,13 @@ class TaskModel {
     var title: String
     var isCompleted: Bool
     var priority: Int = 0
+    var desc: String?
     
-    init(title: String, isCompleted: Bool, priority: Int) {
+    init(title: String, isCompleted: Bool, priority: Int, desc: String? = nil) {
         self.title = title
         self.isCompleted = isCompleted
         self.priority = priority
+        self.desc = desc
     }
     
 }
