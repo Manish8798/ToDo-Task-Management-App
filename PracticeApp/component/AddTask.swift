@@ -53,7 +53,7 @@ struct AddTask: View {
                         .padding()
                     
                     // Optional: Add placeholder text
-                    if text.isEmpty {
+                    if description.isEmpty {
                         Text("Enter task description...")
                             .foregroundColor(.gray)
                             .padding(.leading, 20)
