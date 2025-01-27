@@ -75,6 +75,7 @@ struct ContentView: View {
                                         .truncationMode(.tail)
                                         .strikethrough(task.isCompleted, color: .gray)
                                         .foregroundColor(task.isCompleted ? .gray : .primary)
+                                        .padding(.horizontal, 10)
                                         .onTapGesture {
                                             editingTask = task
                                             text = task.title
@@ -94,6 +95,10 @@ struct ContentView: View {
                                     }
                                 }
                                 .padding()
+                                
+                                if index != todos.count - 1 {
+                                    Divider()
+                                }
                             }
                         }
 
