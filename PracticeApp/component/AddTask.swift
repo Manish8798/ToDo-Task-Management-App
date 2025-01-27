@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 
 struct AddTask: View {
-    
+    private let textLimit = 50 // Set your desired character limit here
     @Binding var addTaskSheet: Bool
     @Binding var text: String
     @Binding var description: String
@@ -31,19 +31,24 @@ struct AddTask: View {
                                 .stroke(Color.gray, lineWidth: 1)
                         )
                         .padding()
+                        .onChange(of: text) { oldValue, newValue in
+                            if newValue.count > textLimit {
+                                text = String(newValue.prefix(textLimit))
+                            }
+                        }
                     
-                    // Optional: Add placeholder text
                     if text.isEmpty {
                         Text("Enter task title...")
                             .foregroundColor(.gray)
                             .padding(.leading, 20)
                             .padding(.top, 25)
                     }
+                    
                 }
                 
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $description)
-                        .frame(height: 200)
+                        .frame(height: 150)
                         .background(Color.gray.opacity(0.1))
                         .cornerRadius(10)
                         .overlay(
